@@ -71,23 +71,24 @@ function async(func, thisArg) {
 }
 
 function Promise(executor) {
+    if (!(this instanceof Promise)) {
+        throw new TypeError("Contructor Promise requires 'new'");
+    }
     if (typeof executor !== "function") {
         throw new TypeError("executor must be a function");
     }
     this._state = PENDING;
-    this._fulfilledFuns = [];
-    this._rejectedFuns = [];
+    this._fulfillReactions = [];
+    this._rejectedReactions = [];
     this._tick = async(this._tick, this);
 
-    async(function () {
-        var resolve = this._resolve.bind(this);
-        var reject = this._reject.bind(this);
-        try {
-            executor(resolve, reject);
-        } catch (ex) {
-            reject(ex);
-        }
-    }, this)();
+    var resolve = this._resolve.bind(this);
+    var reject = this._reject.bind(this);
+    try {
+        executor(resolve, reject);
+    } catch (ex) {
+        reject(ex);
+    }
 }
 
 Promise.prototype._tick = function () {
@@ -104,17 +105,17 @@ Promise.prototype._tick = function () {
 };
 
 Promise.prototype._resolveFulfilledFuns = function () {
-    if (this._fulfilledFuns.length === 0) return;
+    if (this._fulfillReactions.length === 0) return;
     var onFulfilled;
-    while ((onFulfilled = this._fulfilledFuns.shift())) {
+    while ((onFulfilled = this._fulfillReactions.shift())) {
         onFulfilled(this._value);
     }
 };
 
 Promise.prototype._resolveRejectedFuns = function () {
-    if (this._rejectedFuns.length === 0) return;
+    if (this._rejectedReactions.length === 0) return;
     var onRejected;
-    while ((onRejected = this._rejectedFuns.shift())) {
+    while ((onRejected = this._rejectedReactions.shift())) {
         onRejected(this._value);
     }
 };
@@ -158,14 +159,14 @@ Promise.prototype._resolving = function (func, nextPromise) {
 Promise.prototype.then = function (onFulfilled, onRejected) {
     var promise = new Promise(noop);
     if (typeof onFulfilled === "function") {
-        this._fulfilledFuns.push(this._resolving(onFulfilled, promise));
+        this._fulfillReactions.push(this._resolving(onFulfilled, promise));
     } else {
-        this._fulfilledFuns.push(this._resolving(undefined, promise));
+        this._fulfillReactions.push(this._resolving(undefined, promise));
     }
     if (typeof onRejected === "function") {
-        this._rejectedFuns.push(this._resolving(onRejected, promise));
+        this._rejectedReactions.push(this._resolving(onRejected, promise));
     } else {
-        this._rejectedFuns.push(this._resolving(undefined, promise));
+        this._rejectedReactions.push(this._resolving(undefined, promise));
     }
     this._tick();
     return promise;
