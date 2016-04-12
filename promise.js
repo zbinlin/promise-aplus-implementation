@@ -64,8 +64,9 @@ function $$resolve$$(promise, x) {
 }
 
 function async(func, thisArg) {
+    var callback = func.bind(thisArg);
     return function () {
-        setTimeout(func.bind(thisArg), 0);
+        setTimeout(callback, 0);
     };
 }
 
@@ -74,10 +75,19 @@ function Promise(executor) {
         throw new TypeError("executor must be a function");
     }
     this._state = PENDING;
-    this._add(executor);
     this._fulfilledFuns = [];
     this._rejectedFuns = [];
     this._tick = async(this._tick, this);
+
+    async(function () {
+        var resolve = this._resolve.bind(this);
+        var reject = this._reject.bind(this);
+        try {
+            executor(resolve, reject);
+        } catch (ex) {
+            reject(ex);
+        }
+    }, this)();
 }
 
 Promise.prototype._tick = function () {
@@ -107,18 +117,6 @@ Promise.prototype._resolveRejectedFuns = function () {
     while ((onRejected = this._rejectedFuns.shift())) {
         onRejected(this._value);
     }
-};
-
-Promise.prototype._add = function (func) {
-    var resolve = this._resolve.bind(this);
-    var reject = this._reject.bind(this);
-    setTimeout(function () {
-        try {
-            func(resolve, reject);
-        } catch (ex) {
-            reject(ex);
-        }
-    });
 };
 
 Promise.prototype._resolve = function (value) {
