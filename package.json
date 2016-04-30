@@ -1,15 +1,18 @@
 {
   "name": "promise-aplus-implementation",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "a promise aplus implementation",
   "main": "promise.js",
   "scripts": {
-    "test": "promises-aplus-tests ./adapter"
+    "test": "npm run test-aplus && npm run test-es6",
+    "test-aplus": "promises-aplus-tests ./adapter",
+    "test-es6": "promises-es6-tests ./adapter"
   },
   "keywords": [],
   "author": "zbinlin",
   "license": "ISC",
   "devDependencies": {
-    "promises-aplus-tests": "^2.1.1"
+    "promises-aplus-tests": "^2.1.1",
+    "promises-es6-tests": "^0.5.0"
   }
 }

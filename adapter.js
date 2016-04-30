@@ -1,28 +1,28 @@
 "use strict";
 
 const Promise = require("./promise");
+const assert = require("assert");
 
-function noop() {
-}
-
-function deferred() {
-    var promise = new Promise(noop);
-    return {
-        promise,
-        resolve:  function resolve(value) {
-            promise._resolve(value);
-        },
-        reject: function reject(reason) {
-            promise._reject(reason);
-        },
-    };
-}
-
-module.exports.deferred = deferred;
-module.exports.resolved = function (value) {
+/**
+ * For Promise/A+
+ */
+exports.deferred = function () {
+    return Promise.Deferred();
+};
+exports.resolved = function (value) {
     return Promise.resolve(value);
 };
-module.exports.rejected = function (reason) {
+exports.rejected = function (reason) {
     return Promise.reject(reason);
 };
 
+/**
+ * For ECMAScript 2015 Promise
+ */
+exports.defineGlobalPromise = function (globalScope) {
+    globalScope.Promise = Promise;
+    globalScope.assert = assert;
+};
+exports.removeGlobalPromise = function (globalScope) {
+    delete globalScope.Promise;
+};
